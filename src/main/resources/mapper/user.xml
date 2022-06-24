@@ -18,13 +18,13 @@
 		where id=#{id}
 	</delete>
 
-	<select id="select" resultType="UserDto">
+	<select id="search" resultType="UserDto">
 		select *
 		from user
 		where id=#{id} and pw =#{pw}
 	</select>	
 
-	<select id="selectAll" resultType="UserDto">
+	<select id="searchAll" resultType="UserDto">
 		select *
 		from user
 	</select>	
