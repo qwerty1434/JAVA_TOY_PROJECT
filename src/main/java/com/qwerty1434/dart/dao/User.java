@@ -9,6 +9,6 @@ public interface User {
 	public int insert(UserDto data) throws SQLException;
 	public int update(UserDto data) throws SQLException;
 	public int delete(String id) throws SQLException;
-	public UserDto select(String id, String pw) throws SQLException;
-	public List<UserDto> selectAll() throws SQLException;
+	public UserDto search(String id, String pw) throws SQLException;
+	public List<UserDto> searchAll() throws SQLException;
 }

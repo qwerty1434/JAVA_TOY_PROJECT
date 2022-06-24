@@ -21,7 +21,9 @@ public class UserController {
 	
 	@GetMapping("/searchAll")
 	public ResponseEntity<?> searchAll() throws SQLException{
-		List<UserDto> result = dao.selectAll();
+		List<UserDto> result = dao.searchAll();
+		System.out.println(result.toString());
+
 		if(result != null) {
 			return new ResponseEntity<List<UserDto>>(result,HttpStatus.OK);
 		}else {
