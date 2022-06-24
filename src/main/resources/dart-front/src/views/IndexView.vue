@@ -1,7 +1,20 @@
 <template>
   <div class="about">
     <h1>HelloWorld</h1>
-    localhost:80/User/searchAll을 호출하고, 그 결과로 받아온 ResponseEntity를
-    뿌려야 함
+
+    <button @click="searchAll">데이터 모두조회</button>
   </div>
 </template>
+<script>
+import url from "@/url/http";
+
+export default {
+  methods: {
+    searchAll() {
+      url.get("/User/searchAll", {}).then((response) => {
+        console.log(response);
+      });
+    },
+  },
+};
+</script>
