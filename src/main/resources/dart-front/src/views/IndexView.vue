@@ -7,7 +7,7 @@
     <br />
     <br />
     <br />
-    <input type="text" v-model="keyword" />
+    <input type="text" v-model="corp_name" />
 
     <button @click="disclosure">전송</button>
     {{ res }}
@@ -19,7 +19,7 @@ import url from "@/url/http";
 export default {
   data() {
     return {
-      keyword: null,
+      corp_name: null,
       user: null,
       res: null,
     };
@@ -32,10 +32,13 @@ export default {
       });
     },
     disclosure() {
-      url.get("/Api/disclosure", this.keyword).then((response) => {
-        console.log(this.keyword);
-        this.res = response.data;
-      });
+      url
+        .get("/Api/disclosure", {
+          params: { corp_name: this.corp_name },
+        })
+        .then((response) => {
+          this.res = response.data;
+        });
     },
   },
 };
