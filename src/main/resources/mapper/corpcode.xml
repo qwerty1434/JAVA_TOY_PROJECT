@@ -5,6 +5,7 @@
 		select *
 		from corpcode
 		where corp_name = #{corp_name}
+		order by modify_date desc
 	</select>	
 
 	<select id="searchAll" resultType="CorpCodeDto">
