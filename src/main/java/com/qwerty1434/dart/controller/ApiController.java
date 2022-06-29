@@ -44,11 +44,13 @@ public class ApiController {
 		// api 호출
 		String urlstr = "https://opendart.fss.or.kr/api/list.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bgn_de=20200117&end_de=20200117&corp_cls=Y&page_no=1&page_count=10&corp_code="+corp_code;
 		StringBuffer result = Get_Api_Data(urlstr);
-		if(result != null) {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);
+		
+		if(result.toString().equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>("FAIL",HttpStatus.NO_CONTENT);
+			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
 		}
+
 	}
 	
 	@GetMapping("BalanceSheet") // 단일회사 전체 재무제표
@@ -59,12 +61,12 @@ public class ApiController {
 		// api 호출
 		String urlstr = String.format("https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bsns_year=%s&reprt_code=%s&corp_code=%s&fs_div=%s",bsns_year,reprt_code,corp_code,fs_div);
 		StringBuffer result = Get_Api_Data(urlstr);
-		
-		if(result != null) {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);
+		if(result.toString().equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>("FAIL",HttpStatus.NO_CONTENT);
+			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
 		}
+
 	}
 	
 	@GetMapping("ShareDisclosure") // 지분공시 종합정보 (대량보유 상황보고, 임원 및 주요주주 소유보고)
@@ -75,10 +77,11 @@ public class ApiController {
 		StringBuffer result = new StringBuffer();
 		result.append(Get_Api_Data(urlstr1));
 		result.append(Get_Api_Data(urlstr2));
-		if(result != null) {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);
+		
+		if(result.toString().equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>("FAIL",HttpStatus.NO_CONTENT);
+			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
 		}
 	}
 	
@@ -132,12 +135,13 @@ public class ApiController {
 			String urlstr = String.format("https://opendart.fss.or.kr/api/%s.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s&bgn_de=%s&end_de=%s",url_name,corp_code,bgn_de,end_de);
 			result.append(Get_Api_Data(urlstr));			
 		}
-		
-		if(result != null) {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);
+
+		if(result.toString().equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>("FAIL",HttpStatus.NO_CONTENT);
+			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
 		}
+
 
 	}
 	
@@ -165,9 +169,10 @@ public class ApiController {
 		ObjectMapper mapper = new ObjectMapper();		
 		JsonNode node = mapper.readTree(result.toString());
 		if(node.get("status").asText().equals("000")) {
-			return result;
+			StringBuffer sb = new StringBuffer();
+			sb.append(node.get("list"));
+			return sb;
 		}else {
-			System.out.println("에러: "+result.toString());
 			return new StringBuffer();
 		}
 		
