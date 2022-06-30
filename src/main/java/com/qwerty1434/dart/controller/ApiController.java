@@ -42,16 +42,18 @@ public class ApiController {
 		// corp_name을 회사고유번호로 변경
 		
 		String corp_code = Code_To_Name(corp_name);
+		if(corp_code.equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);
+		}
 		// api 호출
 		String urlstr = "https://opendart.fss.or.kr/api/list.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bgn_de=20200117&end_de=20200117&corp_cls=Y&page_no=1&page_count=10&corp_code="+corp_code;
 		List<JsonNode> result = new LinkedList<JsonNode>();
 		JsonNode node = Get_Api_Data(urlstr);
-		if(node != null) {				
-			result.add(node);
-		}		
-		if(result.toString().equals("")) {
+		
+		if(node.get("status").toString().contentEquals("\"013\"")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
+			result.add(node.get("list"));
 			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 
@@ -62,16 +64,19 @@ public class ApiController {
 		
 		// corp_name을 회사고유번호로 변경		
 		String corp_code = Code_To_Name(corp_name);
+		if(corp_code.equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);
+		}
+		
 		// api 호출
 		String urlstr = String.format("https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bsns_year=%s&reprt_code=%s&corp_code=%s&fs_div=%s",bsns_year,reprt_code,corp_code,fs_div);
 		List<JsonNode> result = new LinkedList<JsonNode>();
 		JsonNode node = Get_Api_Data(urlstr);
-		if(node != null) {				
-			result.add(node);
-		}		
-		if(result.toString().equals("")) {
+
+		if(node.get("status").toString().contentEquals("\"013\"")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
+			result.add(node.get("list"));		
 			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 
@@ -80,20 +85,22 @@ public class ApiController {
 	@GetMapping("ShareDisclosure") // 지분공시 종합정보 (대량보유 상황보고, 임원 및 주요주주 소유보고)
 	public ResponseEntity<?> ShareDisclosure(String corp_name) throws IOException, SQLException{
 		String corp_code = Code_To_Name(corp_name);
+		if(corp_code.equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);
+		}
+		
 		String urlstr1 = String.format("https://opendart.fss.or.kr/api/majorstock.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s",corp_code);
 		String urlstr2 = String.format("https://opendart.fss.or.kr/api/elestock.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s",corp_code);
 		List<JsonNode> result = new LinkedList<JsonNode>();
 		JsonNode node1 = Get_Api_Data(urlstr1);
-		if(node1 != null) {				
-			result.add(node1);
-		}		
+	
 		JsonNode node2 = Get_Api_Data(urlstr2);
-		if(node2 != null) {				
-			result.add(node2);
-		}		
-		if(result.toString().equals("")) {
+
+		if((node1.get("status").toString().equals("\"013\"")&& node2.get("status").toString().equals("\"013\""))) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
+			result.add(node1.get("list"));
+			result.add(node2.get("list"));
 			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 	}
@@ -101,6 +108,9 @@ public class ApiController {
 	@GetMapping("KeyPointsReport")
 	public ResponseEntity<?> KeyPointsReport(String corp_name, String bgn_de, String end_de) throws IOException, SQLException{
 		String corp_code = Code_To_Name(corp_name);
+		if(corp_code.equals("")) {
+			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);
+		}
 		
 		List<String> url_list = new ArrayList<String>();
 		url_list.add("dfOcr");
@@ -144,15 +154,17 @@ public class ApiController {
 		url_list.add("stkrtbdTrfDecsn");
 		
 		List<JsonNode> result = new LinkedList<JsonNode>();
+		JsonNode node = null;
 		for (String url_name : url_list) {
 			String urlstr = String.format("https://opendart.fss.or.kr/api/%s.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s&bgn_de=%s&end_de=%s",url_name,corp_code,bgn_de,end_de);
-			JsonNode node = Get_Api_Data(urlstr);
-			if(node != null) {				
-				result.add(node);
+			node = Get_Api_Data(urlstr);
+			if(node.get("status").toString().equals("\"000\"")) {				
+				result.add(node.get("list"));
 			}
+		
 		}
 
-		if(result.toString().equals("")) {
+		if(result.size() == 0) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
 			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
@@ -161,9 +173,15 @@ public class ApiController {
 
 	}
 	
-	public String Code_To_Name(String corp_name) throws IOException, SQLException {
-		List<CorpCodeDto> result = corpcode.search(corp_name);
-		return result.get(0).getCorp_code();
+	public String Code_To_Name(String corp_name) throws SQLException {
+		List<CorpCodeDto> result;
+		result = corpcode.search(corp_name);
+		if(result.size() !=0) {			
+			return result.get(0).getCorp_code();
+		}else {
+			return "";
+		}
+		
 	}
 	
 	public JsonNode Get_Api_Data(String urlstr) throws IOException {
@@ -176,9 +194,8 @@ public class ApiController {
 		String line;
 		ObjectMapper mapper = new ObjectMapper();		
 		JsonNode node = null;
-		while((line = br.readLine()) != null) {
+		while((line = br.readLine()) != null) {			
 			node = mapper.readTree(line);
-			node = (node != null || node.get("status").toString().equals("000"))?node.get("list"):null;
 			return node;
 		}
 		br.close();
