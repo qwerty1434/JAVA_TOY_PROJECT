@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +44,15 @@ public class ApiController {
 		String corp_code = Code_To_Name(corp_name);
 		// api 호출
 		String urlstr = "https://opendart.fss.or.kr/api/list.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bgn_de=20200117&end_de=20200117&corp_cls=Y&page_no=1&page_count=10&corp_code="+corp_code;
-		StringBuffer result = Get_Api_Data(urlstr);
-		
+		List<JsonNode> result = new LinkedList<JsonNode>();
+		JsonNode node = Get_Api_Data(urlstr);
+		if(node != null) {				
+			result.add(node);
+		}		
 		if(result.toString().equals("")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
+			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 
 	}
@@ -60,11 +64,15 @@ public class ApiController {
 		String corp_code = Code_To_Name(corp_name);
 		// api 호출
 		String urlstr = String.format("https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&bsns_year=%s&reprt_code=%s&corp_code=%s&fs_div=%s",bsns_year,reprt_code,corp_code,fs_div);
-		StringBuffer result = Get_Api_Data(urlstr);
+		List<JsonNode> result = new LinkedList<JsonNode>();
+		JsonNode node = Get_Api_Data(urlstr);
+		if(node != null) {				
+			result.add(node);
+		}		
 		if(result.toString().equals("")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
+			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 
 	}
@@ -74,14 +82,19 @@ public class ApiController {
 		String corp_code = Code_To_Name(corp_name);
 		String urlstr1 = String.format("https://opendart.fss.or.kr/api/majorstock.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s",corp_code);
 		String urlstr2 = String.format("https://opendart.fss.or.kr/api/elestock.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s",corp_code);
-		StringBuffer result = new StringBuffer();
-		result.append(Get_Api_Data(urlstr1));
-		result.append(Get_Api_Data(urlstr2));
-		
+		List<JsonNode> result = new LinkedList<JsonNode>();
+		JsonNode node1 = Get_Api_Data(urlstr1);
+		if(node1 != null) {				
+			result.add(node1);
+		}		
+		JsonNode node2 = Get_Api_Data(urlstr2);
+		if(node2 != null) {				
+			result.add(node2);
+		}		
 		if(result.toString().equals("")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
+			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 	}
 	
@@ -130,16 +143,19 @@ public class ApiController {
 		url_list.add("stkrtbdInhDecsn");
 		url_list.add("stkrtbdTrfDecsn");
 		
-		StringBuffer result = new StringBuffer();
+		List<JsonNode> result = new LinkedList<JsonNode>();
 		for (String url_name : url_list) {
 			String urlstr = String.format("https://opendart.fss.or.kr/api/%s.json?crtfc_key=48320d3539dc2b7ee4fad5437667d93177b8027e&corp_code=%s&bgn_de=%s&end_de=%s",url_name,corp_code,bgn_de,end_de);
-			result.append(Get_Api_Data(urlstr));			
+			JsonNode node = Get_Api_Data(urlstr);
+			if(node != null) {				
+				result.add(node);
+			}
 		}
 
 		if(result.toString().equals("")) {
 			return new ResponseEntity<String>("데이터가 없습니다",HttpStatus.OK);			
 		}else {
-			return new ResponseEntity<String>(result.toString(),HttpStatus.OK);			
+			return new ResponseEntity<List<JsonNode>>(result,HttpStatus.OK);			
 		}
 
 
@@ -150,31 +166,25 @@ public class ApiController {
 		return result.get(0).getCorp_code();
 	}
 	
-	public StringBuffer Get_Api_Data(String urlstr) throws IOException {
+	public JsonNode Get_Api_Data(String urlstr) throws IOException {
 		URL url = new URL(urlstr);
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
 		
-		StringBuffer result = new StringBuffer();
 		BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
 		
 		String line;
+		ObjectMapper mapper = new ObjectMapper();		
+		JsonNode node = null;
 		while((line = br.readLine()) != null) {
-			result.append(line+"\n");
+			node = mapper.readTree(line);
+			node = (node != null || node.get("status").toString().equals("000"))?node.get("list"):null;
+			return node;
 		}
 		br.close();
 		conn.disconnect();
 		
-		// json형태로 파싱해서 status가 000(정상)일때만 넘기기
-		ObjectMapper mapper = new ObjectMapper();		
-		JsonNode node = mapper.readTree(result.toString());
-		if(node.get("status").asText().equals("000")) {
-			StringBuffer sb = new StringBuffer();
-			sb.append(node.get("list"));
-			return sb;
-		}else {
-			return new StringBuffer();
-		}
+		return node;
 		
 	}
 }
